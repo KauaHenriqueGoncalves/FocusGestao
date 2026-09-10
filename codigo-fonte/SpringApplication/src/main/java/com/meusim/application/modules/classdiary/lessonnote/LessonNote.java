@@ -1,8 +1,8 @@
-package com.meusim.application.modules.classdiary.attendance;
+package com.meusim.application.modules.classdiary.lessonnote;
 
-import com.meusim.application.modules.classdiary.attendance.dto.CreateAttendanceRequestDTO;
-import com.meusim.application.modules.classdiary.attendance.enums.AttendanceStatus;
-import com.meusim.application.modules.classdiary.lesson.Lesson;
+import com.meusim.application.modules.classdiary.attendance.Attendance;
+import com.meusim.application.modules.classdiary.lessonnote.dto.CreateLessonNoteRequestDTO;
+import com.meusim.application.modules.classdiary.lessonnote.enums.NoteType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
@@ -11,20 +11,20 @@ import java.util.UUID;
 
 @Entity
 @Table(
-        name = "attendance",
-        indexes = {
-                @Index(name = "idx_lesson_student_id", columnList = "lesson_id, student_id_snap")
+        name = "lesson_note",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_attendance_id_student_id_snap", columnNames = {"attendance_id", "student_id_snap"})
         }
 )
-public final class Attendance {
+public final class LessonNote {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lesson_id", nullable = false)
-    private Lesson lesson;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attendance_id", nullable = false)
+    private Attendance attendance;
 
     @Column(name = "student_id_snap", nullable = false)
     private UUID studentId;
@@ -32,42 +32,47 @@ public final class Attendance {
     @Column(name = "student_name_snap", nullable = false)
     private String studentName;
 
-    @Column(name = "status", nullable = false)
-    private AttendanceStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private NoteType type;
 
-    @Column(name = "content", nullable = false, length = 200, columnDefinition = "TEXT")
+    @Column(name = "subtype", nullable = false, length = 30)
+    private String subType;
+
+    @Column(name = "content", nullable = false, length = 500, columnDefinition = "TEXT")
     private String content;
 
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false, nullable = false)
     private Instant createdAt;
 
-    // TODO: cascade lesson_note
-
-    public Attendance() {
+    public LessonNote() {
     }
 
-    public Attendance(UUID id,
-                      Lesson lesson,
+    public LessonNote(UUID id,
+                      Attendance attendance,
                       UUID studentId,
                       String studentName,
-                      AttendanceStatus status,
+                      NoteType type,
+                      String subType,
                       String content) {
         this.id = id;
-        this.lesson = lesson;
+        this.attendance = attendance;
         this.studentId = studentId;
         this.studentName = studentName;
-        this.status = status;
+        this.type = type;
+        this.subType = subType;
         this.content = content;
     }
 
-    public static Attendance createInit(Lesson entity, CreateAttendanceRequestDTO dto) {
-        return new Attendance(
+    public static LessonNote initFrom(Attendance entity, CreateLessonNoteRequestDTO dto) {
+        return new LessonNote(
                 null,
                 entity,
-                dto.studentId(),
-                dto.studentName(),
-                dto.status(),
+                entity.getStudentId(),
+                entity.getStudentName(),
+                dto.type(),
+                dto.subtype(),
                 dto.content()
         );
     }
@@ -80,12 +85,12 @@ public final class Attendance {
         this.id = id;
     }
 
-    public Lesson getLesson() {
-        return lesson;
+    public Attendance getAttendance() {
+        return attendance;
     }
 
-    public void setLesson(Lesson lesson) {
-        this.lesson = lesson;
+    public void setAttendance(Attendance attendance) {
+        this.attendance = attendance;
     }
 
     public UUID getStudentId() {
@@ -104,12 +109,20 @@ public final class Attendance {
         this.studentName = studentName;
     }
 
-    public AttendanceStatus getStatus() {
-        return status;
+    public NoteType getType() {
+        return type;
     }
 
-    public void setStatus(AttendanceStatus status) {
-        this.status = status;
+    public void setType(NoteType type) {
+        this.type = type;
+    }
+
+    public String getSubType() {
+        return subType;
+    }
+
+    public void setSubType(String subType) {
+        this.subType = subType;
     }
 
     public String getContent() {
@@ -131,7 +144,7 @@ public final class Attendance {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        Attendance that = (Attendance) o;
+        LessonNote that = (LessonNote) o;
         return Objects.equals(id, that.id);
     }
 
@@ -142,12 +155,13 @@ public final class Attendance {
 
     @Override
     public String toString() {
-        return "Attendance{" +
+        return "LessonNote{" +
                 "id=" + id +
-                ", lesson=" + lesson +
+                ", attendance=" + attendance +
                 ", studentId=" + studentId +
                 ", studentName='" + studentName + '\'' +
-                ", status=" + status +
+                ", type=" + type +
+                ", subType='" + subType + '\'' +
                 ", content='" + content + '\'' +
                 ", createdAt=" + createdAt +
                 '}';

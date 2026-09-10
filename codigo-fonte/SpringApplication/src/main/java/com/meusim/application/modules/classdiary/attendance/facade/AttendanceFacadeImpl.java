@@ -1,6 +1,7 @@
 package com.meusim.application.modules.classdiary.attendance.facade;
 
 import com.meusim.application.modules.classdiary.attendance.Attendance;
+import com.meusim.application.modules.classdiary.attendance.dto.AttendanceViewResponseDTO;
 import com.meusim.application.modules.classdiary.attendance.dto.CreateAttendanceRequestDTO;
 import com.meusim.application.modules.classdiary.attendance.service.AttendanceService;
 import com.meusim.application.modules.classdiary.lesson.Lesson;
@@ -19,6 +20,11 @@ public class AttendanceFacadeImpl implements AttendanceFacade {
     @Override
     public List<Attendance> getAllByLessonId(UUID lessonId) {
         return attendanceService.findAllByLessonIdWithCache(lessonId);
+    }
+
+    @Override
+    public List<AttendanceViewResponseDTO> getAllViewByLessonId(UUID lessonId) {
+        return attendanceService.findAttendanceViewByLessonIdWithCache(lessonId);
     }
 
     @Override

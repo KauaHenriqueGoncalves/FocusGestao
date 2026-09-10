@@ -1,6 +1,5 @@
 package com.meusim.application.modules.classdiary.lesson.dto;
 
-import com.meusim.application.modules.classdiary.attendance.Attendance;
 import com.meusim.application.modules.classdiary.attendance.dto.AttendanceViewResponseDTO;
 import com.meusim.application.modules.classdiary.lesson.Lesson;
 import com.meusim.application.modules.classdiary.lesson.enums.LessonStatus;
@@ -28,7 +27,7 @@ public record LessonDetailViewResponseDTO(
         Instant createdAt,
         List<AttendanceViewResponseDTO> attendances
 ) {
-    public static LessonDetailViewResponseDTO of(Lesson l, List<Attendance> list) {
+    public static LessonDetailViewResponseDTO of(Lesson l, List<AttendanceViewResponseDTO> list) {
         return new LessonDetailViewResponseDTO(
                 l.getId(),
                 l.getLessonDate(),
@@ -45,7 +44,7 @@ public record LessonDetailViewResponseDTO(
                 l.getEndTime(),
                 l.getDescription(),
                 l.getCreatedAt(),
-                list.stream().map(AttendanceViewResponseDTO::of).toList()
+                list
         );
     }
 }

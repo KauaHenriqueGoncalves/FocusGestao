@@ -7,7 +7,7 @@ import com.meusim.application.modules.academic.classroom.service.ClassroomServic
 import com.meusim.application.modules.academic.classschedule.ClassSchedule;
 import com.meusim.application.modules.academic.classschedule.enums.Weekday;
 import com.meusim.application.modules.academic.classschedule.service.ClassScheduleService;
-import com.meusim.application.modules.classdiary.attendance.Attendance;
+import com.meusim.application.modules.classdiary.attendance.dto.AttendanceViewResponseDTO;
 import com.meusim.application.modules.classdiary.attendance.dto.CreateAttendanceRequestDTO;
 import com.meusim.application.modules.classdiary.attendance.facade.AttendanceFacade;
 import com.meusim.application.modules.classdiary.lesson.Lesson;
@@ -18,6 +18,7 @@ import com.meusim.application.modules.classdiary.lesson.dto.GetToCreateLessonReq
 import com.meusim.application.modules.classdiary.lesson.dto.LabelToCreateLessonResponseDTO;
 import com.meusim.application.modules.classdiary.lesson.enums.LessonDisplayStatus;
 import com.meusim.application.modules.classdiary.lesson.enums.LessonStatus;
+import com.meusim.application.modules.classdiary.lesson.event.CreateLessonToEmailEvent;
 import com.meusim.application.modules.classdiary.lesson.repository.LessonRepository;
 import com.meusim.application.modules.classdiary.lesson.validator.LessonValidator;
 import com.meusim.application.modules.identity.base.user.dto.ResponsibleSnapshotDTO;
@@ -31,6 +32,7 @@ import com.meusim.application.shared.services.cache.CacheService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -54,6 +56,7 @@ public class LessonServiceImpl implements LessonService {
     private final AttendanceFacade attendanceFacade;
     private final ClassroomService classroomService;
     private final ClassScheduleService scheduleService;
+    private final ApplicationEventPublisher eventPublisher;
     private final CacheService cacheService;
 
     public LessonServiceImpl(AuthenticatedUserService authenticatedUserService,
@@ -64,6 +67,7 @@ public class LessonServiceImpl implements LessonService {
                              AttendanceFacade attendanceFacade,
                              ClassroomService classroomService,
                              ClassScheduleService scheduleService,
+                             ApplicationEventPublisher eventPublisher,
                              CacheService cacheService) {
         this.authenticatedUserService = authenticatedUserService;
         this.lessonRepository = lessonRepository;
@@ -73,6 +77,7 @@ public class LessonServiceImpl implements LessonService {
         this.attendanceFacade = attendanceFacade;
         this.classroomService = classroomService;
         this.scheduleService = scheduleService;
+        this.eventPublisher = eventPublisher;
         this.cacheService = cacheService;
     }
 
@@ -319,8 +324,8 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public List<Attendance> findAllAttendancesByLessonId(UUID lessonId) {
-        return attendanceFacade.getAllByLessonId(lessonId);
+    public List<AttendanceViewResponseDTO> findAllAttendancesViewsByLessonId(UUID lessonId) {
+        return attendanceFacade.getAllViewByLessonId(lessonId);
     }
 
     @Override
@@ -372,6 +377,9 @@ public class LessonServiceImpl implements LessonService {
         }
         log.info("Agenda criada e limpar os cache relacionados. [ownerId={}] [schoolId={}] [lessonId={}] [status={}]",
                 ownerId, school.getId(), lesson.getId(), lesson.getStatus());
+        eventPublisher.publishEvent(
+                new CreateLessonToEmailEvent(lesson.getId())
+        );
         cacheService.delete(LessonCacheKeys.agenda(classroom.getId(), lessonDate.getYear(), lessonDate.getMonth().getValue()));
         cacheService.evictByPattern(LessonCacheKeys.pagePattern(classroom.getId()));
         return lesson;

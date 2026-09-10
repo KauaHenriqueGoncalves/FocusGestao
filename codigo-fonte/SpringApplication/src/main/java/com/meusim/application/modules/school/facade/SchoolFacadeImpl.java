@@ -1,5 +1,6 @@
 package com.meusim.application.modules.school.facade;
 
+import com.meusim.application.modules.identity.profile.schooladmin.SchoolAdmin;
 import com.meusim.application.modules.school.School;
 import com.meusim.application.modules.school.dto.CreateSchoolRequestDTO;
 import com.meusim.application.modules.school.dto.SchoolCapacityResponseDTO;
@@ -9,6 +10,8 @@ import com.meusim.application.modules.school.query.SchoolAdminQuery;
 import com.meusim.application.modules.school.query.SchoolCapacityQuery;
 import com.meusim.application.modules.school.service.SchoolService;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -39,6 +42,12 @@ public class SchoolFacadeImpl implements SchoolFacade {
     @Override
     public School getEntityByOwnerId() {
         return schoolService.findByOwnerId();
+    }
+
+    @Override
+    public List<SchoolAdmin> getAllSchoolAdminFromSchool() {
+        School school = schoolService.findByOwnerIdWithCache();
+        return schoolAdminQuery.findAllBySchoolId(school.getId());
     }
 
     @Override

@@ -13,4 +13,8 @@ public final class AttendanceCacheKeys {
     public static String byLessonId(UUID lessonId) {
         return PREFIX + lessonId + "::byLessonId";
     }
+
+    public static String dtoByLessonId(UUID lessonId) {
+        return PREFIX + lessonId + "::dtoByLessonId";
+    }
 }

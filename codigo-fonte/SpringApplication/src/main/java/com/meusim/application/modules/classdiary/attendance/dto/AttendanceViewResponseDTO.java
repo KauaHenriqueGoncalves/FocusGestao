@@ -1,6 +1,8 @@
 package com.meusim.application.modules.classdiary.attendance.dto;
 
 import com.meusim.application.modules.classdiary.attendance.Attendance;
+import com.meusim.application.modules.classdiary.lessonnote.LessonNote;
+import com.meusim.application.modules.classdiary.lessonnote.dto.LessonNoteViewResponseDTO;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,7 +11,8 @@ public record AttendanceViewResponseDTO(
         UUID studentId,
         String studentName,
         String status,
-        String content
+        String content,
+        LessonNoteViewResponseDTO lessonNote
 ) {
     public static AttendanceViewResponseDTO of(Attendance a) {
         return new AttendanceViewResponseDTO(
@@ -17,7 +20,19 @@ public record AttendanceViewResponseDTO(
                 a.getStudentId(),
                 a.getStudentName(),
                 a.getStatus().getName(),
-                a.getContent()
+                a.getContent(),
+                null
+        );
+    }
+
+    public static AttendanceViewResponseDTO of(Attendance a, LessonNote ln) {
+        return new AttendanceViewResponseDTO(
+                a.getId(),
+                a.getStudentId(),
+                a.getStudentName(),
+                a.getStatus().getName(),
+                a.getContent(),
+                LessonNoteViewResponseDTO.of(ln)
         );
     }
 

@@ -1,6 +1,7 @@
 package com.meusim.application.modules.classdiary.lesson.facade;
 
 import com.meusim.application.modules.classdiary.attendance.Attendance;
+import com.meusim.application.modules.classdiary.attendance.dto.AttendanceViewResponseDTO;
 import com.meusim.application.modules.classdiary.lesson.Lesson;
 import com.meusim.application.modules.classdiary.lesson.dto.*;
 import com.meusim.application.modules.classdiary.lesson.service.LessonService;
@@ -36,7 +37,7 @@ public class LessonFacadeImpl implements LessonFacade {
     @Override
     public LessonDetailViewResponseDTO getById(UUID lessonId) {
         Lesson lesson = lessonService.findByIdWithCache(lessonId);
-        List<Attendance> attendances = lessonService.findAllAttendancesByLessonId(lessonId);
+        List<AttendanceViewResponseDTO> attendances = lessonService.findAllAttendancesViewsByLessonId(lessonId);
         return LessonDetailViewResponseDTO.of(lesson, attendances);
     }
 

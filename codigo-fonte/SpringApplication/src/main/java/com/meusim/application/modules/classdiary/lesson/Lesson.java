@@ -77,8 +77,6 @@ public final class Lesson {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Attendance> attendances = new ArrayList<>();
 
-    // TODO: cascade lesson_note
-
     public Lesson() {
     }
 
