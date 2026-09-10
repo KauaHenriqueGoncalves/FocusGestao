@@ -1,7 +1,9 @@
 package com.meusim.application.integration.email.service;
 
+import com.meusim.application.integration.email.dto.SendEmailLessonAdminDTO;
 import com.meusim.application.integration.email.dto.SendEmailLessonLegalGuardianDTO;
 import com.meusim.application.integration.email.dto.SendEmailSubscriptionPaid;
+import com.meusim.application.modules.classdiary.lesson.enums.LessonStatus;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,6 +124,39 @@ public class EmailSendServiceImpl implements EmailSendService {
             catch (Exception e) {
                 log.error("Falha ao enviar e-mail de aula para responsável. [destinatario={}] [motivo={}]",
                         dto.legalGuardianEmail(), e.getMessage(), e);
+            }
+        }
+    }
+
+    @Override
+    @Async("emailExecutor")
+    public void sendLessonEmailToAdmins(List<String> adminEmails, SendEmailLessonAdminDTO info) {
+        for (String to : adminEmails) {
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                Map<String, Object> variables = new HashMap<>();
+                variables.put("lessonDate", info.lessonDate());
+                variables.put("status", info.status().name().toLowerCase());
+                variables.put("responsibleUsername", info.responsibleUsername());
+                variables.put("classroomName", info.classroomName());
+                variables.put("subjectName", info.subjectName());
+                variables.put("startTime", info.startTime());
+                variables.put("endTime", info.endTime());
+                variables.put("description", info.description());
+                variables.put("attendances", info.attendances());
+                String html = templateService.process("email/lesson-notification-admins", variables);
+                helper.setTo(to);
+                helper.setSubject(info.status() == LessonStatus.CANCELED
+                        ? "Aula Cancelada - Meu S.I.M"
+                        : "Resumo da Aula - Meu S.I.M");
+                helper.setText(html, true);
+                mailSender.send(message);
+                log.info("E-mail de aula enviado para admin. [destinatario={}] [status={}]", to, info.status());
+            }
+            catch (Exception e) {
+                log.error("Falha ao enviar e-mail de aula para admin. [destinatario={}] [motivo={}]",
+                        to, e.getMessage(), e);
             }
         }
     }

@@ -78,7 +78,7 @@
                                     Início da Vigência
                                 </td>
                                 <td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; font-weight: 600; color: #0F172A; text-align: right;"
-                                    th:text="${startDate}">--/--/---
+                                    th:text="${#temporals.format(startDate, 'dd-MM-yyyy')}">--/--/---
                                 </td>
                             </tr>
                             <tr>
@@ -86,7 +86,7 @@
                                     Término da Vigência
                                 </td>
                                 <td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; font-weight: 600; color: #0F172A; text-align: right;"
-                                    th:text="${endDate}">--/--/---
+                                    th:text="${#temporals.format(endDate, 'dd-MM-yyyy')}">--/--/---
                                 </td>
                             </tr>
                         </table>

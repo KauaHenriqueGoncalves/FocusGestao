@@ -1,6 +1,7 @@
 package com.meusim.application.integration.email.listener;
 
 import com.meusim.application.auth.service.AuthenticatedUserService;
+import com.meusim.application.integration.email.dto.SendEmailLessonAdminDTO;
 import com.meusim.application.integration.email.dto.SendEmailLessonLegalGuardianDTO;
 import com.meusim.application.integration.email.service.EmailSendService;
 import com.meusim.application.modules.academic.classroom.dto.ClassroomDetailResponse;
@@ -49,13 +50,6 @@ public class LessonListener {
         this.emailSendService = emailSendService;
     }
 
-    // lessonId -> teremos estudantes e todas as informações
-    // students -> conseguimos os email dos pais
-
-    // enviar:
-    // responsavel que criou
-    // administradores
-    // responsavel com cada estudante seu
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlerLessonSentEmail(CreateLessonToEmailEvent event) {
         LessonDetailViewResponseDTO lessonDetail = lessonFacade.getById(event.lessonId());
@@ -73,11 +67,44 @@ public class LessonListener {
             log.warn("Nenhum admin encontrado para envio de email da agenda. [lessonId={}]", event.lessonId());
         } else {
             List<String> adminEmails = admins.stream().map(a -> a.getUser().getEmail()).toList();
-            //emailSendService.sendLessonEmailToAdmins(adminEmails, lessonDetail);
+            SendEmailLessonAdminDTO adminDto = buildAdminEmailDto(lessonDetail);
+            emailSendService.sendLessonEmailToAdmins(adminEmails, adminDto);
         }
         //emailSendService.sendLessonEmailToResponsible(lessonDetail);
         log.info("Emails da agenda processados. [lessonId={}] [status={}] [totalResponsaveis={}] [totalAdmins={}]",
                 event.lessonId(), lessonDetail.status(), legalGuardianEmails.size(), admins.size());
+    }
+
+    private SendEmailLessonAdminDTO buildAdminEmailDto(LessonDetailViewResponseDTO lessonDetail) {
+        List<SendEmailLessonAdminDTO.AttendanceItem> items = lessonDetail.attendances().stream()
+                .map(attendance -> {
+                    SendEmailLessonLegalGuardianDTO.Attendance attendanceDto =
+                            new SendEmailLessonLegalGuardianDTO.Attendance(
+                                    attendance.studentName(),
+                                    attendance.status(),
+                                    attendance.content()
+                            );
+                    SendEmailLessonLegalGuardianDTO.Note noteDto = attendance.lessonNote() == null
+                            ? null
+                            : new SendEmailLessonLegalGuardianDTO.Note(
+                            attendance.lessonNote().type().getName(),
+                            attendance.lessonNote().subType(),
+                            attendance.lessonNote().content()
+                    );
+                    return new SendEmailLessonAdminDTO.AttendanceItem(attendanceDto, noteDto);
+                })
+                .toList();
+        return new SendEmailLessonAdminDTO(
+                lessonDetail.lessonDate(),
+                lessonDetail.status(),
+                lessonDetail.responsibleUsername(),
+                lessonDetail.classroomName(),
+                lessonDetail.subjectName(),
+                lessonDetail.startTime(),
+                lessonDetail.endTime(),
+                lessonDetail.description(),
+                items
+        );
     }
 
     private List<SendEmailLessonLegalGuardianDTO> buildLegalGuardianEmailsForCanceled(LessonDetailViewResponseDTO lessonDetail) {
